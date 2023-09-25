@@ -20,6 +20,7 @@ http:
       basicauth:
         users:
         - "admin"
+        - "user"
       entrypoints:
         - secure
       tls:
