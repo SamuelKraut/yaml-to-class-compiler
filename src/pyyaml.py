@@ -16,13 +16,15 @@ def print_yaml_ast_as_xml(yaml_data, indent=0):
             print_yaml_ast_as_xml(value, indent + 1)
             print("  " * indent + f"</{key}>")
         elif isinstance(value, list):
+            print("  " * indent + f"<{key}>")
             for item in value:
                 if isinstance(item, dict):
-                    print("  " * indent + f"<{key}>")
-                    print_yaml_ast_as_xml(item, indent + 1)
-                    print("  " * indent + f"</{key}>")
+                    print("  " * (indent + 1) + f"<{key}>")
+                    print_yaml_ast_as_xml(item, indent + 2)
+                    print("  " * (indent + 1) + f"</{key}>")
                 else:
-                    print("  " * (indent) + f"<{key}>{item}</{key}>")
+                    print("  " * (indent + 1) + f"<item>{item}</item>")
+            print("  " * indent + f"</{key}>")
         else:
             print("  " * indent + f"<{key}>{value}</{key}>")
 
