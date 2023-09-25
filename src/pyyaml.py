@@ -9,9 +9,25 @@ def parse_yaml_file(yaml_file_path):
             print("Fehler beim Parsen der YAML-Datei:", e)
             return None
 
-if __name__ == "__main__":
-    parsed_data = parse_yaml_file('./src/test.yaml')
+def print_yaml_ast_as_xml(yaml_data, indent=0):
+    for key, value in yaml_data.items():
+        if isinstance(value, dict):
+            print("  " * indent + f"<{key}>")
+            print_yaml_ast_as_xml(value, indent + 1)
+            print("  " * indent + f"</{key}>")
+        elif isinstance(value, list):
+            for item in value:
+                if isinstance(item, dict):
+                    print("  " * indent + f"<{key}>")
+                    print_yaml_ast_as_xml(item, indent + 1)
+                    print("  " * indent + f"</{key}>")
+                else:
+                    print("  " * (indent) + f"<{key}>{item}</{key}>")
+        else:
+            print("  " * indent + f"<{key}>{value}</{key}>")
 
-    if parsed_data:
-        print("Parsed YAML Data:")
-        print(parsed_data['http']['routers']['api'])
+if __name__ == "__main__":
+    parsed_data = parse_yaml_file('./src/test.yml')
+    
+    if(parsed_data != None):
+        print_yaml_ast_as_xml(parsed_data)
