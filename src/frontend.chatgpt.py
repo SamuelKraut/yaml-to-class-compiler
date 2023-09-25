@@ -4,20 +4,25 @@ from arpeggio import RegExMatch
 def yaml_grammar():
     def document():
         return item, ZeroOrMore('\n', item)
-
+    def comment():
+        return "# ", value
+    def attribute():
+        return regex(r'\w+')
+    def instruction():
+        return "#", attribute ," ", value
     def item():
-        return [scalar, sequence, mapping]
+        return [sequence, mapping, value]
 
     def sequence():
         return "-", item
 
     def mapping():
         return key, ":", item
-
+    
     def key():
         return regex(r'\w+')
-
-    def scalar():
+    
+    def value():
         return regex(r'[^\n]+')
 
     def regex(r):
