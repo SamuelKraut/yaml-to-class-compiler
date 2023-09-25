@@ -1,15 +1,16 @@
+# comment
+#instruction
 http:
   routers:
     api:
       rule: Host(`traefik.wildwolfwuff.de`)
+      service: api@internal
       middlewares:
         - api-auth
-      service: api@internal
       entrypoints:
         - secure
-      tls:
-        certresolver:
-          - letsencrypt
+    tls:
+      certresolver: letsencrypt
   services:
     api:
       loadbalancer:
