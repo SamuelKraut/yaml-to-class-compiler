@@ -14,20 +14,20 @@ import re
 # class root(Namespace):
 #     grammar = name(), ":", endl, some(indent)
 
+Symbol.regex = re.compile(r"\w+")
 
-Symbol.regex = re.compile(r"[\w]+")
 
-class Key(str):
-    grammar = name(), ":", restline , endl
+class Entry(Namespace):
+    grammar = name(), ": ", separated, restline, endl
     
 class Object(Namespace):
-    grammar = name(),":",endl, maybe_some(Key)
+    grammar = name(), ":", endl, maybe_some(indent(Entry))
 
 class YamlFile(Namespace):
-    grammar = some(indent(Object))
+    grammar = some(Object)
             
 if __name__ == "__main__": 
     yaml_string = open('./src/test.yml', 'r').read()
     print(repr(yaml_string))
-    parsed = parse(yaml_string, Object)
+    parsed = parse(yaml_string, YamlFile)
     print(thing2xml(parsed, pretty=True).decode())
