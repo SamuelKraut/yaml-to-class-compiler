@@ -22,7 +22,8 @@
 				"ms-python.vscode-pylance",
 				"ms-toolsai.jupyter",
 				"donjayamanne.python-extension-pack",
-				"ms-dotnettools.csharp"
+				"ms-dotnettools.csharp",
+				"joaompinto.vscode-graphviz"
 			]
 		}
 	},
