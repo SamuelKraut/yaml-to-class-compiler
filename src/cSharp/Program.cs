@@ -1,8 +1,8 @@
 using YamlDotNet.RepresentationModel;
 using System.Globalization;
-using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
+// dotnet run /workspaces/yaml-to-class-compiler/src/test.yml /workspaces/yaml-to-class-compiler/src/cSharp/genrated.cs
 class Program
 {
     const string IdentSpace = "    ";
