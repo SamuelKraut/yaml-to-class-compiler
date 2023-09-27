@@ -1,19 +1,23 @@
-using YamlDotNet;
 using YamlDotNet.RepresentationModel;
 using System.Globalization;
-using System.Text;
+using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 class Program
 {
-    const string IdentSpace="    ";
+    const string IdentSpace = "    ";
+    const string OpenScope = "{";
+    const string CloseScope = "}";
+
     static void Main(string[] args)
     {
-        if(args.Length<1) 
+        if (args.Length < 1)
             throw new InvalidOperationException("Missing file name");
-		var yamlString = File.ReadAllText(args[0]);
-        var outPutFile="GeneratedClasses.cs";
-        if(args.Length==2 && !string.IsNullOrWhiteSpace(args[1])){
-            outPutFile=args[1];
+        var yamlString = File.ReadAllText(args[0]);
+        var outPutFile = "GeneratedClasses.cs";
+        if (args.Length == 2 && !string.IsNullOrWhiteSpace(args[1]))
+        {
+            outPutFile = args[1];
         }
         var result = ParseYamlToDictionary(yamlString);
         GenerateCSharpClasses(result, outPutFile);
@@ -23,7 +27,6 @@ class Program
     {
         var yamlStream = new YamlStream();
         yamlStream.Load(new StringReader(yaml));
-
         var rootNode = (YamlMappingNode)yamlStream.Documents[0].RootNode;
         return ParseNode(rootNode);
     }
@@ -34,7 +37,7 @@ class Program
 
         foreach (var entry in ((YamlMappingNode)node).Children)
         {
-            var key = ToCSharpPropertyName(((YamlScalarNode)entry.Key).Value);
+            var key = GeneratePropertyName(((YamlScalarNode)entry.Key).Value);
             var valueNode = entry.Value;
 
             if (valueNode is YamlMappingNode)
@@ -75,52 +78,63 @@ class Program
         return list;
     }
 
-	static void GenerateCSharpClasses(Dictionary<string, object> data, string outputFilePath)
-	{
-        var dirPath= Path.GetDirectoryName(outputFilePath);
-        if(!string.IsNullOrWhiteSpace(dirPath) && !Directory.Exists(dirPath))
+    static void GenerateCSharpClasses(Dictionary<string, object> data, string outputFilePath)
+    {
+        var dirPath = Path.GetDirectoryName(outputFilePath);
+        if (!string.IsNullOrWhiteSpace(dirPath) && !Directory.Exists(dirPath))
             Directory.CreateDirectory(dirPath);
-		using (StreamWriter writer = new StreamWriter(outputFilePath))
-		{
-			GenerateClass(data, "", writer,"");
-		}
+        using (StreamWriter writer = new StreamWriter(outputFilePath))
+        {
+            GenerateClass(data, "", writer, "");
+        }
 
-		Console.WriteLine($"C# classes generated and saved to {outputFilePath}");
-	}
-
-	static void GenerateClass(Dictionary<string, object> data, string className, StreamWriter writer,string indentLevel)
-	{
-		writer.WriteLine($"{indentLevel}public class {ToCSharpConfigClassName(className)}");
-		writer.WriteLine(indentLevel+"{");
-		foreach (var kvp in data)
-		{
-			if (kvp.Value is Dictionary<string, object> nestedDict)
-			{
-				GenerateClass(nestedDict, ToCSharpPropertyName(kvp.Key), writer,indentLevel+IdentSpace); // Recursively generate nested classes
-				writer.WriteLine($"{indentLevel}{IdentSpace}public {ToCSharpConfigClassName(kvp.Key)} {ToCSharpPropertyName(kvp.Key)} {{ get; set; }}");
-			}
-			else if (kvp.Value is List<object> list)
-			{
-				var listType = list.Count > 0 ? list[0].GetType().Name : "object";
-				writer.WriteLine($"{indentLevel}{IdentSpace}public List<{listType}> {ToCSharpPropertyName(kvp.Key)} {{ get; set; }}");
-			}
-			else
-			{
-				writer.WriteLine($"{indentLevel}{IdentSpace}public string {ToCSharpPropertyName(kvp.Key)} {{ get; set; }}");
-			}
-		}
-		writer.WriteLine(indentLevel+"}");
-	}
-
-	static string ToCSharpPropertyName(string name)
-	{
-		// Convert to PascalCase following C# conventions
-		string[] parts = name.Split('_','-');
-		var pascalCaseName = string.Join("", parts.Select(s => CultureInfo.CurrentCulture.TextInfo.ToTitleCase(s.ToLower())));
-		return pascalCaseName;
-	}
-
-    static string ToCSharpConfigClassName(string name){
-        return ToCSharpPropertyName(name)+"Configuration";
+        Console.WriteLine($"C# classes generated and saved to {outputFilePath}");
     }
+
+    static void GenerateClass(Dictionary<string, object> data, string className, StreamWriter writer, string indentLevel)
+    {
+        writer.WriteLine(indentLevel + GenerateClassHeader(className));
+        writer.WriteLine(indentLevel + OpenScope);
+
+        foreach (var kvp in data)
+        {
+            switch (kvp.Value)
+            {
+                case Dictionary<string, object> nestedClass:
+                    writer.WriteLine(indentLevel + IdentSpace + GenerateProperty(GenerateClassName(kvp.Key), kvp.Key));
+                    GenerateClass(nestedClass, kvp.Key, writer, indentLevel + IdentSpace);
+                    break;
+                case List<object> list:
+                    writer.WriteLine(indentLevel + IdentSpace + GenerateProperty($"List<{GetListType(list)}>", kvp.Key));
+                    break;
+                default:
+                    writer.WriteLine(indentLevel + IdentSpace + GenerateProperty("string", kvp.Key));
+                    break;
+            }
+        }
+
+        writer.WriteLine(indentLevel + CloseScope); 
+    }
+    
+    static string GeneratePropertyName(string name)
+    {
+        // split string at "-", "_" and when switching from lowerCase to UpperCase
+        var parts = Regex.Split(name, @"(?<=[a-z])(?=[A-Z])|[_-]");
+
+        // join TitleCase
+        // before: http_routerTest
+        // after: HttpRouterTest
+        return string.Join("", parts.Select(s => CultureInfo.CurrentCulture.TextInfo.ToTitleCase(s.ToLower())));
+    }
+
+    static string GenerateProperty(string type, string name)
+    {
+        return $"public {type} {GeneratePropertyName(name)} {{ get; set; }}";
+    }
+
+    static string GenerateClassHeader(string className) => $"public class {GenerateClassName(className)}";
+
+    static string GenerateClassName(string name) => $"{GeneratePropertyName(name)}Configuration";
+
+    static string GetListType(List<object> list) => list.Count > 0 ? list[0].GetType().Name.ToLower() : "object";
 }
