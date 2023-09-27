@@ -3,7 +3,8 @@
 {
 	"name": "Python 3",
 	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-	"build": { "dockerfile": "Dockerfile" },
+	// "build": { "dockerfile": "Dockerfile" },
+	"image": "mcr.microsoft.com/devcontainers/dotnet:0-7.0",
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	// "features": {},
@@ -23,7 +24,8 @@
 				"ms-toolsai.jupyter",
 				"donjayamanne.python-extension-pack",
 				"ms-dotnettools.csharp",
-				"joaompinto.vscode-graphviz"
+				"joaompinto.vscode-graphviz",
+				"mhutchie.git-graph"
 			]
 		}
 	},
