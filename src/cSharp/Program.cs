@@ -1,9 +1,11 @@
 using YamlDotNet;
 using YamlDotNet.RepresentationModel;
 using System.Globalization;
+using System.Text;
 
 class Program
 {
+    const string IdentSpace="    ";
     static void Main(string[] args)
     {
         if(args.Length!=1) throw new InvalidOperationException("Missing file name");
@@ -72,40 +74,40 @@ class Program
 	{
 		using (StreamWriter writer = new StreamWriter(outputFilePath))
 		{
-			GenerateClass(data, "RootConfig", writer);
+			GenerateClass(data, "RootConfig", writer,"");
 		}
 
 		Console.WriteLine($"C# classes generated and saved to {outputFilePath}");
 	}
 
-	static void GenerateClass(Dictionary<string, object> data, string className, StreamWriter writer)
+	static void GenerateClass(Dictionary<string, object> data, string className, StreamWriter writer,string indentLevel)
 	{
-		writer.WriteLine($"public class {ToCSharpConfigClassName(className)}");
-		writer.WriteLine("{");
+		writer.WriteLine($"{indentLevel}public class {ToCSharpConfigClassName(className)}");
+		writer.WriteLine(indentLevel+"{");
 		foreach (var kvp in data)
 		{
 			if (kvp.Value is Dictionary<string, object> nestedDict)
 			{
-				GenerateClass(nestedDict, ToCSharpPropertyName(kvp.Key), writer); // Recursively generate nested classes
-				writer.WriteLine($"    public {ToCSharpConfigClassName(kvp.Key)} {ToCSharpPropertyName(kvp.Key)} {{ get; set; }}");
+				GenerateClass(nestedDict, ToCSharpPropertyName(kvp.Key), writer,indentLevel+IdentSpace); // Recursively generate nested classes
+				writer.WriteLine($"{indentLevel}{IdentSpace}public {ToCSharpConfigClassName(kvp.Key)} {ToCSharpPropertyName(kvp.Key)} {{ get; set; }}");
 			}
 			else if (kvp.Value is List<object> list)
 			{
 				var listType = list.Count > 0 ? list[0].GetType().Name : "object";
-				writer.WriteLine($"    public List<{listType}> {ToCSharpPropertyName(kvp.Key)} {{ get; set; }}");
+				writer.WriteLine($"{indentLevel}{IdentSpace}public List<{listType}> {ToCSharpPropertyName(kvp.Key)} {{ get; set; }}");
 			}
 			else
 			{
-				writer.WriteLine($"    public string {ToCSharpPropertyName(kvp.Key)} {{ get; set; }}");
+				writer.WriteLine($"{indentLevel}{IdentSpace}public string {ToCSharpPropertyName(kvp.Key)} {{ get; set; }}");
 			}
 		}
-		writer.WriteLine("}");
+		writer.WriteLine(indentLevel+"}");
 	}
 
 	static string ToCSharpPropertyName(string name)
 	{
 		// Convert to PascalCase following C# conventions
-		string[] parts = name.Split('_');
+		string[] parts = name.Split('_','-');
 		var pascalCaseName = string.Join("", parts.Select(s => CultureInfo.CurrentCulture.TextInfo.ToTitleCase(s.ToLower())));
 		return pascalCaseName;
 	}
