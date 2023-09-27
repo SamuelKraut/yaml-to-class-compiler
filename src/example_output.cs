@@ -1,59 +1,68 @@
 using System;
 using System.Collections.Generic;
-public static class Config
+public class Config
 {
-    public static class Http
+    public HttpConfig Http { get; set; }
+    public class HttpConfig
     {
-        public static class Routers
+        public class RoutersConfig
         {
-            public static class Api
+            public ApiConfig Api { get; set; }
+            public class ApiConfig
             {
-                public static string Rule;
-                public static string Service;
-                public static IEnumerable<string> Middlewares;
-                public static IEnumerable<string> Entrypoints;
+                public string Rule { get; set; };
+                public string Service { get; set; };
+                public IEnumerable<string> Middlewares { get; set; };
+                public IEnumerable<string> Entrypoints { get; set; };
             }
 
-            public static class TLS
+            public class TlsConfig
             {
-                public static string CertResolver;
+                public string CertResolver { get; set; };
             }
         }
 
-        public static class Services
+        public class ServicesConfig
         {
-            public static class Api
+            public ApiConfig Api { get; set; }
+            public class ApiConfig
             {
-                public static class Loadbalancer
+                public LoadbalancerConfig Loadbalancer { get; set; }
+                public class LoadbalancerConfig
                 {
-                    public static class Server
+                    public ServerConfig Server { get; set; }
+                    public class ServerConfig
                     {
-                        public static int Port;
+                        public int Port { get; set; };
                     }
                 }
             }
         }
 
-        public static class Middlewares
+        public class MiddlewaresConfig
         {
-            public static class ApiAuth
+            public ApiAuthConfig ApiAuth { get; set; }
+            public Fail2banConfig Fail2Ban { get; set; }
+            public class ApiAuthConfig
             {
-                public static IEnumerable<string> Entrypoints;
-                public static class BasicAuth 
+                public IEnumerable<string> Entrypoints { get; set; };
+                public BasicAuthConfig BasicAuth { get; set; }
+                public class BasicAuthConfig 
                 {
-                    public static IEnumerable<string> Users;
+                    public IEnumerable<string> Users { get; set; };
                     
                 }
             }
-            public static class Fail2ban
+            public class Fail2banConfig
             {
-                public static class Plugin
+                public PluginConfig Plugin { get; set; }
+                public class PluginConfig
                 {
-                    public static string Loglevel;
-                    public static string Bantime;
-                    public static string Findtime;
-                    public static int Maxretry;
-                    public static bool Enabled;
+                    public string Loglevel { get; set; };
+                    public string Bantime { get; set; };
+                    public string Findtime { get; set; };
+                    public int Maxretry { get; set; };
+                    public bool Enabled { get; set; };
                 }
             }
         }
