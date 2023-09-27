@@ -8,10 +8,15 @@ class Program
     const string IdentSpace="    ";
     static void Main(string[] args)
     {
-        if(args.Length!=1) throw new InvalidOperationException("Missing file name");
+        if(args.Length<1) 
+            throw new InvalidOperationException("Missing file name");
 		var yamlString = File.ReadAllText(args[0]);
+        var outPutFile="GeneratedClasses.cs";
+        if(args.Length==2 && !string.IsNullOrWhiteSpace(args[1])){
+            outPutFile=args[1];
+        }
         var result = ParseYamlToDictionary(yamlString);
-        GenerateCSharpClasses(result, "GeneratedClasses.cs");
+        GenerateCSharpClasses(result, outPutFile);
     }
 
     static Dictionary<string, object> ParseYamlToDictionary(string yaml)
@@ -72,9 +77,12 @@ class Program
 
 	static void GenerateCSharpClasses(Dictionary<string, object> data, string outputFilePath)
 	{
+        var dirPath= Path.GetDirectoryName(outputFilePath);
+        if(!string.IsNullOrWhiteSpace(dirPath) && !Directory.Exists(dirPath))
+            Directory.CreateDirectory(dirPath);
 		using (StreamWriter writer = new StreamWriter(outputFilePath))
 		{
-			GenerateClass(data, "RootConfig", writer,"");
+			GenerateClass(data, "", writer,"");
 		}
 
 		Console.WriteLine($"C# classes generated and saved to {outputFilePath}");
@@ -112,11 +120,6 @@ class Program
 		return pascalCaseName;
 	}
 
-	static string ToCSharpTypeName(string name)
-	{
-		// Convert to PascalCase following C# conventions
-		return ToCSharpPropertyName(name);
-	}
     static string ToCSharpConfigClassName(string name){
         return ToCSharpPropertyName(name)+"Configuration";
     }
