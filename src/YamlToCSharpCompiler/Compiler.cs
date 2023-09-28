@@ -92,8 +92,7 @@ public class Compiler
             GenerateClass(data, "", writer, "");
         }
 
-        AnsiConsole.WriteLine($"C# classes generated and saved to");
-        AnsiConsole.Write(new TextPath(target));
+        AnsiConsole.Write(new Panel(new TextPath(target)).Header($"C# classes generated and saved to"));
     }
     /// <summary>
     /// Create classes
