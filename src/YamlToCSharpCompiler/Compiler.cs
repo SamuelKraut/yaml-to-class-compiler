@@ -1,6 +1,7 @@
 using YamlDotNet.RepresentationModel;
 using System.Globalization;
 using System.Text.RegularExpressions;
+using Spectre.Console;
 namespace YamlToCSharpCompiler;
 
 public class Compiler
@@ -10,13 +11,13 @@ public class Compiler
     const string CloseScope = "}";
     private readonly string source;
     private readonly string target;
-    public Compiler(string source,string target){
+    private readonly bool debug;
+    public Compiler(string source,string target,bool debug){
         this.source=source;
         this.target=target;
+        this.debug=debug;
     }
     public void Compile(){
-                
-        
         var yamlString = File.ReadAllText(source);
         var result = ParseYamlToDictionary(yamlString);
         // create diecetory if path not exists
@@ -91,7 +92,8 @@ public class Compiler
             GenerateClass(data, "", writer, "");
         }
 
-        Console.WriteLine($"C# classes generated and saved to {target}");
+        AnsiConsole.WriteLine($"C# classes generated and saved to");
+        AnsiConsole.Write(new TextPath(target));
     }
     /// <summary>
     /// Create classes
@@ -102,27 +104,38 @@ public class Compiler
     /// <param name="indentLevel">The indent spaces</param>
     private void GenerateClass(Dictionary<string, object> data, string className, StreamWriter writer, string indentLevel)
     {
-        writer.WriteLine(indentLevel + GenerateClassHeader(className));
-        writer.WriteLine(indentLevel + OpenScope);
+        var line=indentLevel + GenerateClassHeader(className);
+        writer.WriteLine(line);
+        PrintDebug(line);
+        line=indentLevel + OpenScope;
+        writer.WriteLine(line);
+        PrintDebug(line);
 
         foreach (var kvp in data)
         {
             switch (kvp.Value)
             {
                 case Dictionary<string, object> nestedClass:
-                    writer.WriteLine(indentLevel + IdentSpace + GenerateProperty(GenerateClassName(kvp.Key), kvp.Key));
+                    line=indentLevel + IdentSpace + GenerateProperty(GenerateClassName(kvp.Key), kvp.Key);
+                    writer.WriteLine(line);
+                    PrintDebug(line);
                     GenerateClass(nestedClass, kvp.Key, writer, indentLevel + IdentSpace);
                     break;
                 case List<object> list:
-                    writer.WriteLine(indentLevel + IdentSpace + GenerateProperty($"List<{GetListType(list)}>", kvp.Key));
+                    line=indentLevel + IdentSpace + GenerateProperty($"List<{GetListType(list)}>", kvp.Key);
+                    writer.WriteLine(line);
+                    PrintDebug(line);
                     break;
                 default:
-                    writer.WriteLine(indentLevel + IdentSpace + GenerateProperty("string", kvp.Key));
+                    line=indentLevel + IdentSpace + GenerateProperty("string", kvp.Key);
+                    writer.WriteLine(line);
+                    PrintDebug(line);
                     break;
             }
         }
-
-        writer.WriteLine(indentLevel + CloseScope); 
+        line=indentLevel + CloseScope;
+        writer.WriteLine(); 
+        PrintDebug(line);
     }
     
     private string GeneratePropertyName(string name)
@@ -146,4 +159,9 @@ public class Compiler
     private string GenerateClassName(string name) => $"{GeneratePropertyName(name)}Configuration";
 
     private string GetListType(List<object> list) => list.Count > 0 ? list[0].GetType().Name.ToLower() : "object";
+    private void PrintDebug(string text){
+        if(debug){
+            AnsiConsole.WriteLine($"[blue]{text}[/]");
+        }
+    }
 }
