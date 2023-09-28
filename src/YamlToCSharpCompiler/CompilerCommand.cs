@@ -19,7 +19,7 @@ class CompilerCommand : Command<CompilerCommand.Settings>
     public string TargetPath {get;set;}
     [CommandOption("--debug")]
     [Description("Prints debug informations")]
-    public bool Debug{get;set;}
+    public bool Debug {get;set;}
     public string GetTargetFile(){
         if(TargetPath.EndsWith(Path.DirectorySeparatorChar))
             return TargetPath + "GeneratedClasses.cs";
@@ -36,7 +36,7 @@ class CompilerCommand : Command<CompilerCommand.Settings>
 }
     public override int Execute([NotNull] CommandContext context, [NotNull] Settings settings)
     {
-        var c = new Compiler(settings.SourcePath,settings.GetTargetFile());
+        var c = new Compiler(settings.SourcePath,settings.GetTargetFile(),settings.Debug);
         c.Compile();
         return 0;
     }
