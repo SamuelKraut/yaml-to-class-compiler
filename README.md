@@ -11,3 +11,4 @@ Start wihtout dev container
 1. Install dotnet core
 1. navigate to `./src/YamlToCSharpCompiler/`
 1. run in shell `dotnet run`
+1. add missing parameter

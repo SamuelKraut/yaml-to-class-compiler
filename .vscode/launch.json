@@ -10,7 +10,7 @@
             "request": "launch",
             "preLaunchTask": "build",
             "program": "${workspaceFolder}/src/YamlToCSharpCompiler/bin/Debug/net7.0/linux-x64/src.dll",
-            "args": ["/workspaces/yaml-to-class-compiler/src/test.yml","-o","/workspaces/yaml-to-class-compiler/generated/"],
+            "args": ["/workspaces/yaml-to-class-compiler/src/test.yml","-o","/workspaces/yaml-to-class-compiler/generated/","--debug"],
             "cwd": "${workspaceFolder}/src/YamlToCSharpCompiler",
             "console": "internalConsole",
             "stopAtEntry": false
