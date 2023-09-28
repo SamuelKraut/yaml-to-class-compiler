@@ -13,13 +13,13 @@ public class Configuration
                 public string Service { get; set; }
                 public List<string> Middlewares { get; set; }
                 public List<string> Entrypoints { get; set; }
-            }
+
             public TlsConfiguration Tls { get; set; }
             public class TlsConfiguration
             {
                 public string Certresolver { get; set; }
-            }
-        }
+
+
         public ServicesConfiguration Services { get; set; }
         public class ServicesConfiguration
         {
@@ -33,10 +33,10 @@ public class Configuration
                     public class ServerConfiguration
                     {
                         public string Port { get; set; }
-                    }
-                }
-            }
-        }
+
+
+
+
         public MiddlewaresConfiguration Middlewares { get; set; }
         public class MiddlewaresConfiguration
         {
@@ -47,14 +47,14 @@ public class Configuration
                 public class BasicauthConfiguration
                 {
                     public List<string> Users { get; set; }
-                }
+
                 public List<string> Entrypoints { get; set; }
                 public TlsConfiguration Tls { get; set; }
                 public class TlsConfiguration
                 {
                     public string Certresolver { get; set; }
-                }
-            }
+
+
             public Fail2banConfiguration Fail2ban { get; set; }
             public class Fail2banConfiguration
             {
@@ -69,9 +69,9 @@ public class Configuration
                         public string Findtime { get; set; }
                         public string Maxretry { get; set; }
                         public string Enabled { get; set; }
-                    }
-                }
-            }
-        }
-    }
-}
+
+
+
+
+
+

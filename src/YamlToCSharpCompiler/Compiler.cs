@@ -161,7 +161,7 @@ public class Compiler
     private string GetListType(List<object> list) => list.Count > 0 ? list[0].GetType().Name.ToLower() : "object";
     private void PrintDebug(string text){
         if(debug){
-            AnsiConsole.WriteLine($"[blue]{text}[/]");
+            AnsiConsole.Write(new Markup($"[blue]{text}[/]\n"));
         }
     }
 }
