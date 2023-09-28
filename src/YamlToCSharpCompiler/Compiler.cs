@@ -29,10 +29,10 @@ public class Compiler
             Directory.CreateDirectory(dirPath);
         GenerateCSharpClasses(result, outPutFile);
     }
-    private Dictionary<string, object> ParseYamlToDictionary(string yaml)
+    private Dictionary<string, object> ParseYamlToDictionary(string yamlString)
     {
         var yamlStream = new YamlStream();
-        yamlStream.Load(new StringReader(yaml));
+        yamlStream.Load(new StringReader(yamlString));
         var rootNode = (YamlMappingNode)yamlStream.Documents[0].RootNode;
         return ParseNode(rootNode);
     }
