@@ -103,10 +103,10 @@ public class Compiler
     /// <param name="indentLevel">The indent spaces</param>
     private void GenerateClass(Dictionary<string, object> data, string className, StreamWriter writer, string indentLevel)
     {
-        var line=indentLevel + GenerateClassHeader(className);
+        var line = indentLevel + GenerateClassHeader(className);
         writer.WriteLine(line);
         PrintDebug(line);
-        line=indentLevel + OpenScope;
+        line = indentLevel + OpenScope;
         writer.WriteLine(line);
         PrintDebug(line);
 
@@ -115,28 +115,55 @@ public class Compiler
             switch (kvp.Value)
             {
                 case Dictionary<string, object> nestedClass:
-                    line=indentLevel + IdentSpace + GenerateProperty(GenerateClassName(kvp.Key), kvp.Key);
+                    line = indentLevel + IdentSpace + GenerateProperty(GenerateClassName(kvp.Key), kvp.Key);
                     writer.WriteLine(line);
                     PrintDebug(line);
                     GenerateClass(nestedClass, kvp.Key, writer, indentLevel + IdentSpace);
                     break;
                 case List<object> list:
-                    line=indentLevel + IdentSpace + GenerateProperty($"List<{GetListType(list)}>", kvp.Key);
+                    line = indentLevel + IdentSpace + GenerateProperty($"List<{GetListType(list)}>", kvp.Key);
                     writer.WriteLine(line);
                     PrintDebug(line);
                     break;
                 default:
-                    line=indentLevel + IdentSpace + GenerateProperty("string", kvp.Key);
+                    line = indentLevel + IdentSpace + GenerateProperty(GetTypeFromString(kvp.Value.ToString()), kvp.Key);
                     writer.WriteLine(line);
                     PrintDebug(line);
                     break;
             }
         }
-        line=indentLevel + CloseScope;
-        writer.WriteLine(); 
+        line = indentLevel + CloseScope;
+        writer.WriteLine(line); 
         PrintDebug(line);
     }
     
+    private string GetTypeFromString(string? value)
+    {
+        if (value == null) return "string";
+
+        value = RemoveStartEndQuotes(value);
+
+        // value is a int
+        if (Regex.IsMatch(value, "^-?\\d+$")) return "int";
+        
+        // value is a boolean
+        if (Regex.IsMatch(value, "^(?i:true|false)$")) return "bool";
+
+        // value is a double
+        if (Regex.IsMatch(value, "^-?[1-9]\\d*.\\d+$")) return "double";
+
+        return "string";
+    }
+
+    private string RemoveStartEndQuotes(string input)
+    {
+        if (input.StartsWith("\"") && input.EndsWith("\""))
+        {
+            return input.Substring(1, input.Length - 2);
+        }
+        return input;
+    }
+
     private string GeneratePropertyName(string name)
     {
         // split string at "-", "_" and when switching from lowerCase to UpperCase
@@ -157,9 +184,26 @@ public class Compiler
 
     private string GenerateClassName(string name) => $"{GeneratePropertyName(name)}Configuration";
 
-    private string GetListType(List<object> list) => list.Count > 0 ? list[0].GetType().Name.ToLower() : "object";
+    private string GetListType(List<object> list)
+    {
+        string listType = "";
+
+        foreach (var item in list)
+        {
+            var itemType = GetTypeFromString(item.ToString());
+            if (listType.Length == 0)
+            {
+                listType = itemType;
+                continue;
+            }
+            if (!listType.Equals(itemType) || listType.Equals("string")) return "string";
+        }
+        return listType;
+    }
+
     private void PrintDebug(string text){
-        if(debug){
+        if(debug)
+        {
             AnsiConsole.Write(new Markup($"[blue]{text}[/]\n"));
         }
     }
