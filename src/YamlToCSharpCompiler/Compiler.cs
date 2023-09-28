@@ -1,37 +1,41 @@
 using YamlDotNet.RepresentationModel;
 using System.Globalization;
 using System.Text.RegularExpressions;
+namespace YamlToCSharpCompiler;
 
-// dotnet run /workspaces/yaml-to-class-compiler/src/test.yml /workspaces/yaml-to-class-compiler/src/cSharp/genrated.cs
-class Program
+public class Compiler
 {
     const string IdentSpace = "    ";
     const string OpenScope = "{";
     const string CloseScope = "}";
-
-    static void Main(string[] args)
-    {
-        if (args.Length < 1)
-            throw new InvalidOperationException("Missing file name");
-        var yamlString = File.ReadAllText(args[0]);
-        var outPutFile = "GeneratedClasses.cs";
-        if (args.Length == 2 && !string.IsNullOrWhiteSpace(args[1]))
-        {
-            outPutFile = args[1];
-        }
+    private readonly string source;
+    private readonly string target;
+    public Compiler(string source,string target){
+        this.source=source;
+        this.target=target;
+    }
+    public void Compile(){
+                
+        
+        var yamlString = File.ReadAllText(source);
         var result = ParseYamlToDictionary(yamlString);
+        // create diecetory if path not exists
+        var outPutFile = string.IsNullOrWhiteSpace(target)
+            ? "GeneratedClasses.cs"
+            : target;
+        var dirPath = Path.GetDirectoryName(outPutFile);
+        if (!string.IsNullOrWhiteSpace(dirPath) && !Directory.Exists(dirPath))
+            Directory.CreateDirectory(dirPath);
         GenerateCSharpClasses(result, outPutFile);
     }
-
-    static Dictionary<string, object> ParseYamlToDictionary(string yaml)
+    private Dictionary<string, object> ParseYamlToDictionary(string yaml)
     {
         var yamlStream = new YamlStream();
         yamlStream.Load(new StringReader(yaml));
         var rootNode = (YamlMappingNode)yamlStream.Documents[0].RootNode;
         return ParseNode(rootNode);
     }
-
-    static Dictionary<string, object> ParseNode(YamlNode node)
+    private Dictionary<string, object> ParseNode(YamlNode node)
     {
         var result = new Dictionary<string, object>();
 
@@ -57,8 +61,8 @@ class Program
 
         return result;
     }
-
-    static List<object> ParseList(YamlSequenceNode node)
+    // Parses a yaml list
+    private List<object> ParseList(YamlSequenceNode node)
     {
         var list = new List<object>();
 
@@ -77,21 +81,26 @@ class Program
 
         return list;
     }
-
-    static void GenerateCSharpClasses(Dictionary<string, object> data, string outputFilePath)
+    private void GenerateCSharpClasses(Dictionary<string, object> data, string target)
     {
-        var dirPath = Path.GetDirectoryName(outputFilePath);
-        if (!string.IsNullOrWhiteSpace(dirPath) && !Directory.Exists(dirPath))
-            Directory.CreateDirectory(dirPath);
-        using (StreamWriter writer = new StreamWriter(outputFilePath))
+       
+        /* creates a new instance of the `StreamWriter` class and associates it with the specified `target`.
+        The `StreamWriter` is used to write the gerneated classes to a file. */
+        using (StreamWriter writer = new StreamWriter(target))
         {
             GenerateClass(data, "", writer, "");
         }
 
-        Console.WriteLine($"C# classes generated and saved to {outputFilePath}");
+        Console.WriteLine($"C# classes generated and saved to {target}");
     }
-
-    static void GenerateClass(Dictionary<string, object> data, string className, StreamWriter writer, string indentLevel)
+    /// <summary>
+    /// Create classes
+    /// </summary>
+    /// <param name="data">The properties for the class</param>
+    /// <param name="className">The class name</param>
+    /// <param name="writer">The stream writer where the strings write to</param>
+    /// <param name="indentLevel">The indent spaces</param>
+    private void GenerateClass(Dictionary<string, object> data, string className, StreamWriter writer, string indentLevel)
     {
         writer.WriteLine(indentLevel + GenerateClassHeader(className));
         writer.WriteLine(indentLevel + OpenScope);
@@ -116,7 +125,7 @@ class Program
         writer.WriteLine(indentLevel + CloseScope); 
     }
     
-    static string GeneratePropertyName(string name)
+    private string GeneratePropertyName(string name)
     {
         // split string at "-", "_" and when switching from lowerCase to UpperCase
         var parts = Regex.Split(name, @"(?<=[a-z])(?=[A-Z])|[_-]");
@@ -127,14 +136,14 @@ class Program
         return string.Join("", parts.Select(s => CultureInfo.CurrentCulture.TextInfo.ToTitleCase(s.ToLower())));
     }
 
-    static string GenerateProperty(string type, string name)
+    private string GenerateProperty(string type, string name)
     {
         return $"public {type} {GeneratePropertyName(name)} {{ get; set; }}";
     }
 
-    static string GenerateClassHeader(string className) => $"public class {GenerateClassName(className)}";
+    private string GenerateClassHeader(string className) => $"public class {GenerateClassName(className)}";
 
-    static string GenerateClassName(string name) => $"{GeneratePropertyName(name)}Configuration";
+    private string GenerateClassName(string name) => $"{GeneratePropertyName(name)}Configuration";
 
-    static string GetListType(List<object> list) => list.Count > 0 ? list[0].GetType().Name.ToLower() : "object";
+    private string GetListType(List<object> list) => list.Count > 0 ? list[0].GetType().Name.ToLower() : "object";
 }
