@@ -21,8 +21,14 @@ public class Compiler
     public Compiler(string source,string target, bool debug)
     {
         this.source = source;
-        this.target = string.IsNullOrWhiteSpace(target) ? "GeneratedClasses.cs" : target;
+        this.target = target;
         this.debug = debug;
+    }
+
+    public void Compile()
+    {
+        var yamlString = File.ReadAllText(source);
+        YamlMappingNode parsedYaml = ParseYaml(yamlString);
 
         var dirPath = Path.GetDirectoryName(target);
         // create diecetory if path not exists
@@ -30,12 +36,7 @@ public class Compiler
         {
             Directory.CreateDirectory(dirPath);
         }
-    }
 
-    public void Compile()
-    {
-        var yamlString = File.ReadAllText(source);
-        YamlMappingNode parsedYaml = ParseYaml(yamlString);
         /* creates a new instance of the `StreamWriter` class and associates it with the specified `target`.
         The `StreamWriter` is used to write the gerneated classes to a file. */
         using (StreamWriter writer = new StreamWriter(target))
@@ -123,8 +124,6 @@ public class Compiler
     {
         if (value == null) return "string";
 
-        value = RemoveStartEndQuotes(value);
-
         // value is a int
         if (intRegex.IsMatch(value)) return "int";
         
@@ -135,15 +134,6 @@ public class Compiler
         if (doubleRegex.IsMatch(value)) return "double";
 
         return "string";
-    }
-
-    private string RemoveStartEndQuotes(string input)
-    {
-        if (input.StartsWith("\"") && input.EndsWith("\""))
-        {
-            return input.Substring(1, input.Length - 2);
-        }
-        return input;
     }
 
     private string GeneratePropertyName(string name)
