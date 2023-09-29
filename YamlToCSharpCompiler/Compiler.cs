@@ -106,10 +106,6 @@ public class Compiler
 
         foreach (var itemNode in node)
         {
-            //if (itemNode is YamlMappingNode mappingNode)
-            //{
-            //    list.Add(ParseNode(mappingNode, "", writer, indentLevel + IdentSpace);); // Recursively parse nested types within the list
-            //}
             if (itemNode is YamlScalarNode scalarNode)
             {
                 list.Add(scalarNode.Value);
