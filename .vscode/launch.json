@@ -9,9 +9,9 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/src/YamlToCSharpCompiler/bin/Debug/net7.0/linux-x64/src.dll",
-            "args": ["/workspaces/yaml-to-class-compiler/src/test.yml","-o","/workspaces/yaml-to-class-compiler/generated/","--debug"],
-            "cwd": "${workspaceFolder}/src/YamlToCSharpCompiler",
+            "program": "${workspaceFolder}/YamlToCSharpCompiler/bin/Debug/net7.0/linux-x64/src.dll",
+            "args": ["/workspaces/yaml-to-class-compiler/test.yml","-o","/workspaces/yaml-to-class-compiler/generated/","--debug"],
+            "cwd": "${workspaceFolder}/YamlToCSharpCompiler",
             "console": "internalConsole",
             "stopAtEntry": false
         },
