@@ -8,7 +8,8 @@ http:
       middlewares:
         - api-auth
       entrypoints:
-        - secure
+        - 8000
+        - 9000
     tls:
       certresolver: letsencrypt
   services:
@@ -32,5 +33,5 @@ http:
           logLevel: "INFO"
           bantime: "3h"
           findtime: "3m"
-          maxretry: 3
+          maxretry: 3.5
           enabled: true

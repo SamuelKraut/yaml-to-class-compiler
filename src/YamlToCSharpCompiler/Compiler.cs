@@ -2,6 +2,7 @@ using YamlDotNet.RepresentationModel;
 using System.Globalization;
 using System.Text.RegularExpressions;
 using Spectre.Console;
+
 namespace YamlToCSharpCompiler;
 
 public class Compiler
@@ -15,88 +16,41 @@ public class Compiler
     private readonly string source;
     private readonly string target;
     private readonly bool debug;
-    public Compiler(string source,string target,bool debug){
-        this.source=source;
-        this.target=target;
-        this.debug=debug;
-    }
-    public void Compile(){
-        var yamlString = File.ReadAllText(source);
-        var result = ParseYamlToDictionary(yamlString);
+
+    public Compiler(string source,string target, bool debug)
+    {
+        this.source = source;
+        this.target = string.IsNullOrWhiteSpace(target) ? "GeneratedClasses.cs" : target;
+        this.debug = debug;
+
+        var dirPath = Path.GetDirectoryName(target);
         // create diecetory if path not exists
-        var outPutFile = string.IsNullOrWhiteSpace(target)
-            ? "GeneratedClasses.cs"
-            : target;
-        var dirPath = Path.GetDirectoryName(outPutFile);
         if (!string.IsNullOrWhiteSpace(dirPath) && !Directory.Exists(dirPath))
+        {
             Directory.CreateDirectory(dirPath);
-        GenerateCSharpClasses(result, outPutFile);
-    }
-    private Dictionary<string, object> ParseYamlToDictionary(string yamlString)
-    {
-        var yamlStream = new YamlStream();
-        yamlStream.Load(new StringReader(yamlString));
-        var rootNode = (YamlMappingNode)yamlStream.Documents[0].RootNode;
-        return ParseNode(rootNode);
-    }
-    private Dictionary<string, object> ParseNode(YamlNode node)
-    {
-        var result = new Dictionary<string, object>();
-
-        foreach (var entry in ((YamlMappingNode)node).Children)
-        {
-            var key = GeneratePropertyName(((YamlScalarNode)entry.Key).Value);
-            var valueNode = entry.Value;
-
-            if (valueNode is YamlMappingNode)
-            {
-                result[key] = ParseNode(valueNode); // Recursively parse nested types
-            }
-            else if (valueNode is YamlSequenceNode)
-            {
-                result[key] = ParseList((YamlSequenceNode)valueNode); // Parse list (array)
-            }
-            else if (valueNode is YamlScalarNode)
-            {
-                result[key] = ((YamlScalarNode)valueNode).Value;
-            }
-            // Add more conditions for other YAML types as needed
         }
-
-        return result;
     }
-    // Parses a yaml list
-    private List<object> ParseList(YamlSequenceNode node)
-    {
-        var list = new List<object>();
 
-        foreach (var itemNode in node)
-        {
-            if (itemNode is YamlMappingNode)
-            {
-                list.Add(ParseNode(itemNode)); // Recursively parse nested types within the list
-            }
-            else if (itemNode is YamlScalarNode)
-            {
-                list.Add(((YamlScalarNode)itemNode).Value);
-            }
-            // Add more conditions for other YAML types as needed
-        }
-
-        return list;
-    }
-    private void GenerateCSharpClasses(Dictionary<string, object> data, string target)
+    public void Compile()
     {
-       
+        var yamlString = File.ReadAllText(source);
+        YamlMappingNode parsedYaml = ParseYaml(yamlString);
         /* creates a new instance of the `StreamWriter` class and associates it with the specified `target`.
         The `StreamWriter` is used to write the gerneated classes to a file. */
         using (StreamWriter writer = new StreamWriter(target))
         {
-            GenerateClass(data, "", writer, "");
+            GenerateClass(parsedYaml, "", writer, "");
         }
-
         AnsiConsole.Write(new Panel(new TextPath(target)).Header($"C# classes generated and saved to"));
     }
+    private YamlMappingNode ParseYaml(string yamlString)
+    {
+        var yamlStream = new YamlStream();
+        yamlStream.Load(new StringReader(yamlString));
+        var parsed = (YamlMappingNode)yamlStream.Documents[0].RootNode;
+        return parsed != null ? parsed : throw new Exception("Parsed YAML is empty.");
+    }
+
     /// <summary>
     /// Create classes
     /// </summary>
@@ -104,7 +58,7 @@ public class Compiler
     /// <param name="className">The class name</param>
     /// <param name="writer">The stream writer where the strings write to</param>
     /// <param name="indentLevel">The indent spaces</param>
-    private void GenerateClass(Dictionary<string, object> data, string className, StreamWriter writer, string indentLevel)
+    private void GenerateClass(YamlMappingNode node, string className, StreamWriter writer, string indentLevel)
     {
         var line = indentLevel + GenerateClassHeader(className);
         writer.WriteLine(line);
@@ -113,31 +67,55 @@ public class Compiler
         writer.WriteLine(line);
         PrintDebug(line);
 
-        foreach (var kvp in data)
+        foreach (var entry in node.Children)
         {
-            switch (kvp.Value)
+            var key = GeneratePropertyName(entry.Key.ToString());
+
+            if (entry.Value is YamlMappingNode mappingNode)
             {
-                case Dictionary<string, object> nestedClass:
-                    line = indentLevel + IdentSpace + GenerateProperty(GenerateClassName(kvp.Key), kvp.Key);
-                    writer.WriteLine(line);
-                    PrintDebug(line);
-                    GenerateClass(nestedClass, kvp.Key, writer, indentLevel + IdentSpace);
-                    break;
-                case List<object> list:
-                    line = indentLevel + IdentSpace + GenerateProperty($"List<{GetListType(list)}>", kvp.Key);
-                    writer.WriteLine(line);
-                    PrintDebug(line);
-                    break;
-                default:
-                    line = indentLevel + IdentSpace + GenerateProperty(GetTypeFromString(kvp.Value.ToString()), kvp.Key);
-                    writer.WriteLine(line);
-                    PrintDebug(line);
-                    break;
+                line = indentLevel + IdentSpace + GenerateProperty(GenerateClassName(entry.Key.ToString()), entry.Key.ToString());
+                writer.WriteLine(line);
+                PrintDebug(line);
+                GenerateClass(mappingNode, entry.Key.ToString(), writer, indentLevel + IdentSpace);
             }
+            else if (entry.Value is YamlSequenceNode sequenceNode)
+            {
+                line = indentLevel + IdentSpace + GenerateProperty($"List<{GetListType(ParseList(sequenceNode))}>", entry.Key.ToString());
+                writer.WriteLine(line);
+                PrintDebug(line);
+            }
+            else if (entry.Value is YamlScalarNode scalarNode)
+            {
+                line = indentLevel + IdentSpace + GenerateProperty(GetTypeFromString(entry.Value.ToString()), entry.Key.ToString());
+                writer.WriteLine(line);
+                PrintDebug(line);
+            }
+            // Add more conditions for other YAML types as needed
         }
+
         line = indentLevel + CloseScope;
-        writer.WriteLine(line); 
+        writer.WriteLine(line);
         PrintDebug(line);
+    }
+
+    private List<object> ParseList(YamlSequenceNode node)
+    {
+        var list = new List<object>();
+
+        foreach (var itemNode in node)
+        {
+            //if (itemNode is YamlMappingNode mappingNode)
+            //{
+            //    list.Add(ParseNode(mappingNode, "", writer, indentLevel + IdentSpace);); // Recursively parse nested types within the list
+            //}
+            if (itemNode is YamlScalarNode scalarNode)
+            {
+                list.Add(scalarNode.Value);
+            }
+            // Add more conditions for other YAML types as needed
+        }
+
+        return list;
     }
 
     private string GetTypeFromString(string? value)
