@@ -9,6 +9,9 @@ public class Compiler
     const string IdentSpace = "    ";
     const string OpenScope = "{";
     const string CloseScope = "}";
+    private static readonly Regex intRegex=new("^-?\\d+$");
+    private static readonly Regex boolRegex=new("^(?i:true|false)$");
+    private static readonly Regex doubleRegex=new("^-?[1-9]\\d*.\\d+$");
     private readonly string source;
     private readonly string target;
     private readonly bool debug;
@@ -136,7 +139,7 @@ public class Compiler
         writer.WriteLine(line); 
         PrintDebug(line);
     }
-    
+
     private string GetTypeFromString(string? value)
     {
         if (value == null) return "string";
@@ -144,13 +147,13 @@ public class Compiler
         value = RemoveStartEndQuotes(value);
 
         // value is a int
-        if (Regex.IsMatch(value, "^-?\\d+$")) return "int";
+        if (intRegex.IsMatch(value)) return "int";
         
         // value is a boolean
-        if (Regex.IsMatch(value, "^(?i:true|false)$")) return "bool";
+        if (boolRegex.IsMatch(value)) return "bool";
 
         // value is a double
-        if (Regex.IsMatch(value, "^-?[1-9]\\d*.\\d+$")) return "double";
+        if (doubleRegex.IsMatch(value)) return "double";
 
         return "string";
     }
