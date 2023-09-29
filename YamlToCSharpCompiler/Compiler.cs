@@ -13,6 +13,7 @@ public class Compiler
     private static readonly Regex intRegex=new("^-?\\d+$");
     private static readonly Regex boolRegex=new("^(?i:true|false)$");
     private static readonly Regex doubleRegex=new("^-?[1-9]\\d*.\\d+$");
+    private static readonly Regex propertyNameRegex=new(@"(?<=[a-z])(?=[A-Z])|[_-]");
     private readonly string source;
     private readonly string target;
     private readonly bool debug;
@@ -148,7 +149,7 @@ public class Compiler
     private string GeneratePropertyName(string name)
     {
         // split string at "-", "_" and when switching from lowerCase to UpperCase
-        var parts = Regex.Split(name, @"(?<=[a-z])(?=[A-Z])|[_-]");
+        var parts = propertyNameRegex.Split(name);
 
         // join TitleCase
         // before: http_routerTest
